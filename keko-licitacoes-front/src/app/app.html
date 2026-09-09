@@ -1,0 +1,151 @@
+<main class="shell">
+  <section class="toolbar">
+    <div>
+      <p class="eyebrow">Keko Licitacoes</p>
+      <h1>Consulta de editais PNCP</h1>
+    </div>
+
+    <div class="summary">
+      <span>{{ resultado()?.totalRegistros ?? 0 }}</span>
+      <small>editais encontrados</small>
+    </div>
+  </section>
+
+  <section class="search-panel">
+    <form (ngSubmit)="pesquisar(1)" class="filters">
+      <label class="field field-wide">
+        <span>Palavra-chave</span>
+        <input
+          name="palavraChave"
+          type="search"
+          [(ngModel)]="filtros.palavraChave"
+          placeholder="calhas, pavimentacao, uniformes"
+        />
+      </label>
+
+      <label class="field">
+        <span>Estado</span>
+        <select name="uf" [(ngModel)]="filtros.uf">
+          <option value="">Todos</option>
+          @for (estado of estados; track estado.uf) {
+            <option [value]="estado.uf">{{ estado.uf }} - {{ estado.nome }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Status</span>
+        <select name="status" [(ngModel)]="filtros.status">
+          @for (status of statusOptions; track status.value) {
+            <option [value]="status.value">{{ status.label }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Ordenacao</span>
+        <select name="ordenacao" [(ngModel)]="filtros.ordenacao">
+          <option value="-data">Mais recentes</option>
+          <option value="data">Mais antigos</option>
+          <option value="-valor">Maior valor</option>
+          <option value="valor">Menor valor</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Itens por pagina</span>
+        <select name="tamanhoPagina" [(ngModel)]="filtros.tamanhoPagina">
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="25">25</option>
+          <option [ngValue]="50">50</option>
+        </select>
+      </label>
+
+      <div class="field modalities">
+        <span>Modalidades</span>
+        <div class="checks">
+          @for (modalidade of modalidades; track modalidade.id) {
+            <label>
+              <input
+                type="checkbox"
+                [checked]="modalidadesSelecionadas().includes(modalidade.id)"
+                (change)="alternarModalidade(modalidade.id, $event)"
+              />
+              <span>{{ modalidade.nome }}</span>
+            </label>
+          }
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="primary" [disabled]="carregando()">
+          {{ carregando() ? 'Buscando...' : 'Buscar editais' }}
+        </button>
+        <button type="button" class="secondary" (click)="limpar()" [disabled]="carregando()">Limpar</button>
+      </div>
+    </form>
+  </section>
+
+  @if (erro()) {
+    <section class="state error">{{ erro() }}</section>
+  }
+
+  <section class="results-head">
+    <div>
+      <h2>Resultados</h2>
+      @if (resultado()) {
+        <p>Pagina {{ resultado()?.pagina }} de {{ resultado()?.totalPaginas || 1 }}</p>
+      }
+    </div>
+
+    <div class="pager">
+      <button type="button" (click)="paginaAnterior()" [disabled]="!podeVoltar() || carregando()">Anterior</button>
+      <button type="button" (click)="proximaPagina()" [disabled]="!podeAvancar() || carregando()">Proxima</button>
+    </div>
+  </section>
+
+  @if (carregando()) {
+    <section class="state">Consultando o PNCP...</section>
+  } @else if (resultado()?.resultados?.length) {
+    <section class="results">
+      @for (licitacao of resultado()?.resultados; track licitacao.idExterno ?? licitacao.link) {
+        <article class="notice">
+          <div class="notice-main">
+            <div class="notice-meta">
+              <span>{{ licitacao.uf || '--' }}</span>
+              <span>{{ licitacao.modalidade || 'Modalidade nao informada' }}</span>
+              <span>{{ licitacao.situacao || 'Sem status' }}</span>
+            </div>
+            <h3>{{ licitacao.objeto || licitacao.numeroEdital || 'Objeto nao informado' }}</h3>
+            <p>{{ licitacao.orgao || 'Orgao nao informado' }}</p>
+          </div>
+
+          <dl class="notice-data">
+            <div>
+              <dt>Municipio</dt>
+              <dd>{{ licitacao.municipio || '-' }}</dd>
+            </div>
+            <div>
+              <dt>Publicacao</dt>
+              <dd>{{ formatarData(licitacao.dataPublicacao) }}</dd>
+            </div>
+            <div>
+              <dt>Encerramento</dt>
+              <dd>{{ formatarData(licitacao.dataEncerramentoProposta) }}</dd>
+            </div>
+            <div>
+              <dt>Valor</dt>
+              <dd>{{ formatarMoeda(licitacao.valorEstimado) }}</dd>
+            </div>
+          </dl>
+
+          @if (licitacao.link) {
+            <a class="open-link" [href]="licitacao.link" target="_blank" rel="noopener">Abrir no PNCP</a>
+          }
+        </article>
+      }
+    </section>
+  } @else {
+    <section class="state">Use os filtros acima para localizar editais abertos no PNCP.</section>
+  }
+</main>
