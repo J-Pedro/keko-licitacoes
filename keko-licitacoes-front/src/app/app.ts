@@ -38,7 +38,9 @@ export class App {
   protected readonly resultado = signal<LicitacaoPage | null>(null);
   protected readonly carregando = signal(false);
   protected readonly erro = signal<string | null>(null);
+  protected readonly aviso = signal<string | null>(null);
   protected readonly modalidadesSelecionadas = signal<number[]>([]);
+  protected readonly palavrasChave = signal<string[]>([]);
 
   protected readonly podeVoltar = computed(() => (this.resultado()?.pagina ?? 1) > 1);
   protected readonly podeAvancar = computed(() => (this.resultado()?.paginasRestantes ?? 0) > 0);
@@ -98,16 +100,24 @@ export class App {
   ];
 
   protected pesquisar(pagina = 1): void {
+    if (this.carregando()) {
+      return;
+    }
+
     this.carregando.set(true);
     this.erro.set(null);
+    this.aviso.set(null);
 
     this.licitacoesService.buscar({
       ...this.filtros,
+      palavraChave: '',
+      palavrasChave: this.palavrasChave(),
       modalidades: this.modalidadesSelecionadas(),
       pagina
     }).subscribe({
       next: (resultado) => {
         this.resultado.set(resultado);
+        this.aviso.set(this.mensagemErroParcial(resultado));
         this.carregando.set(false);
       },
       error: () => {
@@ -126,8 +136,43 @@ export class App {
       tamanhoPagina: 10
     };
     this.modalidadesSelecionadas.set([]);
+    this.palavrasChave.set([]);
     this.resultado.set(null);
     this.erro.set(null);
+    this.aviso.set(null);
+  }
+
+  protected adicionarPalavraChave(): void {
+    const palavraChave = this.filtros.palavraChave.trim();
+
+    if (!palavraChave) {
+      return;
+    }
+
+    const jaExiste = this.palavrasChave().some(
+      (palavra) => palavra.toLocaleLowerCase('pt-BR') === palavraChave.toLocaleLowerCase('pt-BR')
+    );
+
+    if (jaExiste) {
+      this.filtros.palavraChave = '';
+      return;
+    }
+
+    this.palavrasChave.set([...this.palavrasChave(), palavraChave]);
+    this.filtros.palavraChave = '';
+  }
+
+  protected removerPalavraChave(palavraChave: string): void {
+    this.palavrasChave.set(this.palavrasChave().filter((palavra) => palavra !== palavraChave));
+  }
+
+  protected adicionarPalavraChaveComEnter(event: KeyboardEvent): void {
+    if (event.key !== 'Enter') {
+      return;
+    }
+
+    event.preventDefault();
+    this.adicionarPalavraChave();
   }
 
   protected alternarModalidade(id: number, event: Event): void {
@@ -175,5 +220,30 @@ export class App {
       currency: 'BRL',
       maximumFractionDigits: 2
     }).format(valor);
+  }
+
+  private mensagemErroParcial(resultado: LicitacaoPage): string | null {
+    const erros = resultado.erros ?? [];
+
+    if (!erros.length) {
+      return null;
+    }
+
+    if (!resultado.resultados.length) {
+      return 'Nenhuma palavra-chave pode ser consultada no PNCP agora. Tente novamente em alguns instantes.';
+    }
+
+    const palavras = erros.map((erro) => erro.palavraChave).join(', ');
+    return `Uma ou mais palavras-chave nao puderam ser consultadas: ${palavras}. Os demais resultados foram mantidos.`;
+  }
+
+  protected textoCarregando(): string {
+    const total = this.palavrasChave().length;
+
+    if (total > 1) {
+      return `Consultando ${total} palavras-chave no PNCP...`;
+    }
+
+    return 'Consultando o PNCP...';
   }
 }

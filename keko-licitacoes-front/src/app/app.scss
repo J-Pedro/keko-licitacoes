@@ -93,6 +93,12 @@ h1 {
   font-weight: 700;
 }
 
+.label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
 .field input,
 .field select {
   width: 100%;
@@ -110,6 +116,32 @@ h1 {
 .field select:focus {
   border-color: #0c7c84;
   box-shadow: 0 0 0 3px rgba(12, 124, 132, 0.14);
+}
+
+.keyword-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  gap: 8px;
+}
+
+.add-keyword {
+  min-width: 42px;
+  padding: 0;
+  font-size: 1.2rem;
+}
+
+.keyword-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.keyword-chip button {
+  border: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  min-height: 0;
 }
 
 .modalities {
@@ -237,7 +269,11 @@ button:disabled {
   margin-bottom: 8px;
 }
 
-.notice-meta span {
+.notice-meta span,
+.keyword-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border-radius: 999px;
   padding: 4px 8px;
   color: #29535a;

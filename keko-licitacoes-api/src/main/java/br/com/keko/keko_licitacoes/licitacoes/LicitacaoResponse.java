@@ -1,6 +1,7 @@
 package br.com.keko.keko_licitacoes.licitacoes;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public record LicitacaoResponse(
 		String fonte,
@@ -20,5 +21,6 @@ public record LicitacaoResponse(
 		String situacao,
 		BigDecimal valorEstimado,
 		String sistemaOrigem,
-		String link) {
+		String link,
+		List<String> matchedKeywords) {
 }

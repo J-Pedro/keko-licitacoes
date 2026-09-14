@@ -8,5 +8,6 @@ public record LicitacaoPageResponse(
 		Integer totalRegistros,
 		Integer totalPaginas,
 		Integer paginasRestantes,
-		List<LicitacaoResponse> resultados) {
+		List<LicitacaoResponse> resultados,
+		List<LicitacaoSearchError> erros) {
 }

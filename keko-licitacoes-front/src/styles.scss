@@ -7,3 +7,48 @@ body {
   min-height: 100%;
   margin: 0;
 }
+
+.tooltip {
+  position: relative;
+}
+
+.info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  min-height: 19px;
+  border: 1px solid #0c6f76;
+  border-radius: 999px;
+  padding: 0;
+  color: #0c5f66;
+  background: #e6f2f3;
+  font: 700 0.72rem/1 Arial, Helvetica, sans-serif;
+}
+
+.tooltip-text {
+  position: absolute;
+  z-index: 2;
+  top: 27px;
+  left: 0;
+  width: 280px;
+  border: 1px solid #bdd4d8;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #24353d;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(23, 32, 38, 0.16);
+  font: 500 0.78rem/1.4 Arial, Helvetica, sans-serif;
+  display: none;
+}
+
+.tooltip-text strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #0c5f66;
+}
+
+.tooltip:hover .tooltip-text,
+.tooltip:focus-within .tooltip-text {
+  display: block;
+}

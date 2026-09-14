@@ -2,6 +2,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import { environment } from '../environments/environment';
+
 export interface Licitacao {
   fonte: string;
   idExterno: string | null;
@@ -21,6 +23,12 @@ export interface Licitacao {
   valorEstimado: number | null;
   sistemaOrigem: string | null;
   link: string | null;
+  matchedKeywords?: string[];
+}
+
+export interface LicitacaoSearchError {
+  palavraChave: string;
+  mensagem: string;
 }
 
 export interface LicitacaoPage {
@@ -30,10 +38,12 @@ export interface LicitacaoPage {
   totalPaginas: number;
   paginasRestantes: number;
   resultados: Licitacao[];
+  erros?: LicitacaoSearchError[];
 }
 
 export interface LicitacaoSearchParams {
   palavraChave?: string;
+  palavrasChave?: string[];
   uf?: string;
   modalidades?: number[];
   status?: string;
@@ -46,7 +56,7 @@ export interface LicitacaoSearchParams {
 @Injectable({ providedIn: 'root' })
 export class LicitacoesService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api/licitacoes';
+  private readonly apiUrl = environment.apiUrl;
 
   buscar(params: LicitacaoSearchParams): Observable<LicitacaoPage> {
     let httpParams = new HttpParams()
@@ -56,8 +66,12 @@ export class LicitacoesService {
       .set('tiposDocumento', params.tiposDocumento || 'edital')
       .set('ordenacao', params.ordenacao || '-data');
 
-    if (params.palavraChave?.trim()) {
-      httpParams = httpParams.set('palavraChave', params.palavraChave.trim());
+    const palavrasChave = this.normalizarPalavrasChave(
+      params.palavrasChave ?? (params.palavraChave ? [params.palavraChave] : [])
+    );
+
+    for (const palavraChave of palavrasChave) {
+      httpParams = httpParams.append('palavraChave', palavraChave);
     }
 
     if (params.uf?.trim()) {
@@ -69,5 +83,20 @@ export class LicitacoesService {
     }
 
     return this.http.get<LicitacaoPage>(this.apiUrl, { params: httpParams });
+  }
+
+  private normalizarPalavrasChave(palavrasChave: string[]): string[] {
+    const unicas = new Map<string, string>();
+
+    for (const palavraChave of palavrasChave) {
+      const normalizada = palavraChave.trim();
+      const chave = normalizada.toLocaleLowerCase('pt-BR');
+
+      if (normalizada && !unicas.has(chave)) {
+        unicas.set(chave, normalizada);
+      }
+    }
+
+    return [...unicas.values()];
   }
 }
